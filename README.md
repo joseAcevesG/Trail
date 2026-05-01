@@ -1,240 +1,120 @@
-# RouteStack
+# Trail
 
-RouteStack is a work-in-progress backend REST API framework design focused on bringing frontend-style developer experience to backend services.
+**A schema-first REST framework for teams that want backend APIs to feel as clear, typed, and navigable as modern frontend apps.**
 
-The core idea is simple: define API routes from files, describe their inputs and responses with schemas, keep business logic in plain services, and let the framework handle HTTP concerns such as validation, response mapping, middleware flow, and OpenAPI generation.
+Trail brings the developer experience of file-based frameworks to backend services: routes live where you expect them, contracts are defined up front, middleware is part of the type system, and OpenAPI falls out of the same source of truth your code already uses.
 
-## Goals
+It is for teams that like the ergonomics of Next.js, Astro, and TanStack, but want that same clarity at the API boundary.
 
-- File-based routing for REST APIs
-- Schema-first request and response contracts
-- Strongly typed route handlers and service return values
-- OpenAPI generation from route and middleware definitions
-- Minimal framework-owned context with a safe escape hatch
-- Middleware that can type-safely extend request state
-- A non-opinionated service layer with no controller or heavy DI requirement
+## The Idea
 
-## Design Principles
+Backend APIs should not require a maze of controllers, decorators, registries, adapters, and hand-written docs just to answer a simple question:
 
-1. Schemas define the contract.
-2. Routes consume schemas.
-3. Services return typed results.
-4. The framework translates those results into HTTP responses.
+> What does this route accept, what can it return, and what context is available when it runs?
 
-RouteStack is intended to be opinionated about the HTTP boundary while staying flexible about application internals such as services, tools, models, persistence, and domain logic.
-
-## File-Based Routing
-
-Routes are mapped from the filesystem:
+Trail is built around making that answer obvious.
 
 ```txt
-routes/
-  users/
-    get.ts
-    post.ts
-    $id/
-      get.ts
-      patch.ts
+routes/users/post.ts
+routes/users/$id/get.ts
+routes/users/$id/patch.ts
 ```
 
-Routing conventions:
+Each file is a route. Each route owns its contract. The framework handles the HTTP translation.
 
-- `$id` creates a dynamic parameter.
-- `$` creates a catch-all route.
-- `(group)` creates a grouping folder without changing the URL.
+## Why Trail
 
-This keeps route discovery predictable and removes the need for a separate controller registry.
+### File-based APIs
 
-## Route Definition
+Your backend shape should be visible from the filesystem. Trail uses route files and folders to make endpoints easy to discover, review, and maintain.
 
-A route declares its input schemas, possible responses, optional middleware, and handler:
+### Contracts before handlers
+
+Routes define their inputs and possible responses before business logic runs. That gives handlers, services, clients, and documentation the same contract.
+
+### Typed responses, not loose JSON
+
+Services return named outcomes like `success`, `notFound`, or `emailConflict`. If a route did not declare that response, TypeScript should reject it.
+
+### Middleware that carries meaning
+
+Auth, permissions, tenant loading, and request enrichment should not disappear into invisible side effects. Middleware declares what state it requires, what it guarantees, and which early responses it can produce.
+
+### OpenAPI without a second model
+
+The route contract is the documentation model. Inputs, outputs, middleware rejects, and global errors can all contribute to the generated API spec.
+
+### Framework at the boundary, freedom inside
+
+Trail is opinionated where APIs need consistency: routing, validation, context, middleware, responses, and docs. Your services, models, database, and domain code remain yours.
+
+## What It Feels Like
 
 ```ts
 export default createRoute({
-  input: {
-    body: CreateUserSchema,
-    query: QuerySchema,
-    params: ParamsSchema,
-  },
+	input: {
+		body: CreateUserSchema,
+	},
 
-  responses: {
-    success: {
-      status: 200,
-      schema: UserSchema,
-    },
-    emailConflict: {
-      status: 409,
-      schema: EmailConflictSchema,
-    },
-  },
+	responses: {
+		success: {
+			status: 201,
+			schema: UserSchema,
+		},
+		emailConflict: {
+			status: 409,
+			schema: EmailConflictSchema,
+		},
+	},
 
-  run: async ({ input, ctx }) => {
-    return userService.create(input.body)
-  },
-})
+	run: async ({ input, ctx }) => {
+		return users.create({
+			data: input.body,
+			actorId: ctx.state.user.id,
+		});
+	},
+});
 ```
 
-The framework uses the response keys to generate a typed result union. Services must return one of the responses declared by the route.
+The route says what it accepts. It says what it can return. It receives typed input and typed context. The service returns a declared outcome. Trail turns that outcome into the HTTP response.
 
-```ts
-return {
-  type: "emailConflict",
-  message: "Email already exists",
-}
-```
-
-Returning an undeclared response should fail at the type level.
-
-## Error Handling
-
-RouteStack separates business errors from unexpected failures.
-
-Declared errors are part of the route contract and can be returned by services or middleware. Unhandled errors are caught globally and mapped to global error responses.
-
-```ts
-defineGlobalErrors({
-  internalError: {
-    status: 500,
-    schema: InternalErrorSchema,
-  },
-})
-```
-
-Global errors can be overridden at global, group, or route level.
-
-## Validation
-
-Inputs are always validated in development and production. Output validation is enabled in development and can be made optional in production.
-
-| Validation | Dev | Prod |
-| ---------- | --- | ---- |
-| Input      | Yes | Yes  |
-| Output     | Yes | Optional |
-
-## Context
-
-RouteStack exposes its own framework context rather than coupling route code directly to an underlying HTTP library.
+## The Mental Model
 
 ```txt
-ctx:
-  core:
-    requestId
-    method
-    path
-    url
-    env
-    logger
-
-  request:
-    ip
-    userAgent
-    headers
-    cookies
-
-  state:
-    user
-    tenant
-    custom middleware data
-
-  raw:
-    hono
+files define routes
+schemas define contracts
+middleware defines context
+services define behavior
+Trail defines the HTTP boundary
 ```
 
-`ctx.raw` exists as an escape hatch, but normal application code should use the portable RouteStack context.
+That is the essence of the framework: make the API boundary explicit, typed, and easy to navigate without taking over the rest of the application.
 
-## Middleware
+## Built For
 
-Middleware is designed to be typed, composable, and integrated with route responses and OpenAPI output.
+- Product teams building REST APIs in TypeScript
+- Teams that want OpenAPI without maintaining parallel documentation
+- Backend codebases that have outgrown ad hoc controllers
+- Services where auth, permissions, tenancy, and typed context matter
+- Developers who want framework ergonomics without a heavy application architecture
 
-Middleware can define:
+## Current Status
 
-- `requires`: state that must already exist
-- `provides`: state that may be added
-- `guarantees`: state that will exist if the middleware continues
-- `rejects`: early responses the middleware may return
+Trail is currently in the design stage. This repository is the first articulation of the framework: the product direction, the core architecture, and the middleware model.
 
-```ts
-export default defineMiddleware({
-  requires: {
-    user: UserSchema,
-  },
-
-  guarantees: {
-    permissions: PermissionsSchema,
-  },
-
-  rejects: {
-    cannotLoadPermissions: {
-      status: 500,
-      schema: CannotLoadPermissionsSchema,
-    },
-  },
-
-  run: async ({ ctx, next }) => {
-    const permissions = await getPermissions(ctx.state.user.id)
-
-    if (!permissions) {
-      return {
-        type: "cannotLoadPermissions",
-        message: "Failed to load permissions",
-      }
-    }
-
-    return next({
-      state: {
-        permissions,
-      },
-    })
-  },
-})
-```
-
-Middleware can only extend `ctx.state`. It cannot modify `ctx.core` or `ctx.request`.
-
-Execution order:
+The next milestone is a small prototype that proves the core loop:
 
 ```txt
-global -> group -> folder -> route -> handler
+route file -> schema contract -> typed handler -> typed response -> OpenAPI
 ```
 
-Final route responses include:
+## Design Notes
 
-```txt
-route.responses
-+ middleware.rejects
-+ global errors
-```
+The deeper architecture notes live here:
 
-## Architecture Boundary
+- [Backend framework design](./backend_framework_design.md)
+- [Middleware system design](./middleware_design.md)
 
-RouteStack owns the HTTP-facing workflow:
+## Naming Notes
 
-```txt
-routes -> schemas -> handler -> HTTP
-```
-
-Application code remains flexible:
-
-```txt
-services -> tools -> models
-```
-
-This keeps the framework focused on contracts, routing, validation, context, and response handling while avoiding unnecessary constraints on business logic.
-
-## Repository Contents
-
-- [backend_framework_design.md](./backend_framework_design.md): core framework design, routing, route contracts, context, validation, and error handling.
-- [middleware_design.md](./middleware_design.md): typed middleware design, execution order, state guarantees, rejects, and OpenAPI integration.
-
-## Status
-
-RouteStack is currently a design-stage project. The repository contains architectural notes and examples rather than a packaged implementation.
-
-## Next Steps
-
-- Finalize route and schema APIs.
-- Define the middleware file structure.
-- Prototype route discovery and type generation.
-- Implement response union branding.
-- Generate OpenAPI from route and middleware contracts.
-- Add examples for authentication, permissions, and resource CRUD routes.
+Trail is the working name. Routa and Weave are reserved as fallback options.

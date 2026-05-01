@@ -1,8 +1,8 @@
-# Middleware System Design
+# Trail Middleware System Design
 
 ## Overview
 
-The middleware system is responsible for:
+Trail's middleware system is responsible for:
 
 - Enriching the request context (`ctx.state`)
 - Enforcing guards (auth, permissions, etc.)

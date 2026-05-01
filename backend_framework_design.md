@@ -1,8 +1,8 @@
-# Backend Framework Design (WIP)
+# Trail Backend Framework Design (WIP)
 
 ## Vision
 
-Backend REST API framework inspired by frontend DX (Next.js, TanStack, Astro) with:
+Trail is a backend REST API framework inspired by frontend DX (Next.js, TanStack, Astro) with:
 
 - File-based routing
 - Strong typing via schemas (Zod/SOD)
@@ -17,7 +17,7 @@ Backend REST API framework inspired by frontend DX (Next.js, TanStack, Astro) wi
 1. **Schemas first**
 2. **Routes consume schemas**
 3. **Services return typed results**
-4. **Framework handles HTTP**
+4. **Trail handles HTTP**
 
 ---
 
@@ -147,7 +147,7 @@ defineGlobalErrors({
 
 ## Context Design
 
-Framework uses its own context (not Hono directly).
+Trail uses its own context (not Hono directly).
 
 ### Structure
 
@@ -192,7 +192,7 @@ run: async ({ input, ctx }) => {
 ## Architecture Boundaries
 
 ```
-Framework Opinionated:
+Trail Opinionated:
 routes → schemas → handler → HTTP
 
 User Flexible:
@@ -221,4 +221,3 @@ services → tools → models
 - Type-safe state injection
 - Auth patterns
 - Error propagation
-
