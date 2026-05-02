@@ -19,13 +19,15 @@ Middleware can exist at multiple levels:
 
 1. Global
 2. Group (folder with `(group)` syntax)
-3. Resource folder
-4. Route/method level
+3. Resource segment (URL folder, e.g. `users/` or `users/$id/`)
+4. Resource route file (shared middleware and metadata for every method on that segment)
+5. Per-method contract (`createRoute` for a single verb)
+6. Handler (`run`)
 
 Execution order:
 
 ```
-global → group → folder → route → handler
+global → group → segment folder → route file → method contract → handler
 ```
 
 ---
@@ -79,7 +81,10 @@ export default defineMiddleware({
 		if (!permissions) {
 			return {
 				type: "cannotLoadPermissions",
-				message: "Failed to load permissions",
+				data: {
+					title: "Failed to load permissions",
+					code: "PERMISSIONS_LOAD_FAILED",
+				},
 			};
 		}
 
@@ -119,8 +124,9 @@ Final `ctx.state` is the combination of all middleware:
 ```
 global
 + group
-+ folder
-+ route
++ segment folder
++ route file
++ method contract
 = final state
 ```
 
@@ -130,7 +136,8 @@ global
 global → requestId
 auth → user
 permissions → permissions
-route → specific flags
+route file → shared resource flags
+method contract → verb-specific flags
 ```
 
 Handler receives:
@@ -146,12 +153,15 @@ No optional chaining if guaranteed.
 
 ## Rejects
 
-Middleware can return early responses using declared types:
+Middleware can return early responses using declared types. Rejects use the same **`{ type, data }`** envelope as route handlers (**`data`** matches the reject schema; no HTTP **`status`** inside **`data`** when it is implied by the reject declaration).
 
 ```ts
 return {
 	type: "invalidToken",
-	message: "Invalid token",
+	data: {
+		title: "Invalid token",
+		code: "INVALID_TOKEN",
+	},
 };
 ```
 
@@ -168,10 +178,18 @@ type → status → schema → OpenAPI
 Final route responses include:
 
 ```
-route.responses
+each method’s createRoute.responses (within defineRoute)
 + middleware.rejects (all levels)
 + global errors
 ```
+
+OpenAPI generation rules:
+
+- OpenAPI may only document one response entry per HTTP status code.
+- If route responses, middleware rejects, or global errors share the same HTTP status, Trail must merge them into one OpenAPI response entry for that status.
+- If same-status variants have different payload shapes, Trail should document that status with `oneOf`.
+- If same-status variants expose different media types, Trail should merge them under the same status entry and media-type map.
+- Runtime typing remains variant-based by `type`, even when documentation merges them under one status code.
 
 ---
 
@@ -213,17 +231,20 @@ middleware requires state not guaranteed before
 
 ---
 
-## Method-Level Middleware
+## Method-level middleware
 
-Routes can define specific middleware:
+A specific **`createRoute`** (one HTTP method on a path) can attach middleware; siblings on the same **`defineRoute`** export are unaffected unless they share file-level middleware.
 
 ```ts
-export default createRoute({
-	middleware: [requirePermission("users.create")],
+export default defineRoute({
+	post: createRoute({
+		middleware: [requirePermission("users.create")],
+		// …`input`, `responses`, etc.
 
-	run: async ({ ctx }) => {
-		ctx.state.user.id;
-	},
+		run: async ({ ctx }) => {
+			ctx.state.user.id;
+		},
+	}),
 });
 ```
 

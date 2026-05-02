@@ -4,7 +4,7 @@
 
 Trail is a backend REST API framework inspired by frontend DX (Next.js, TanStack, Astro) with:
 
-- File-based routing
+- Resource-oriented file routing (one route file per path segment, multiple HTTP methods per file)
 - Strong typing via schemas (Zod/SOD)
 - OpenAPI generation
 - Minimal, portable context
@@ -23,17 +23,57 @@ Trail is a backend REST API framework inspired by frontend DX (Next.js, TanStack
 
 ## Routing
 
-### File Structure
+Trail maps folders to URL segments. A **route file** exports **`defineRoute`**, which attaches **one path** (or one parameterized path) to **several HTTP verbs**, each described by a **`createRoute`** call. Shared params, middleware, tags, and schemas for that path live in **one place**, which scales better than splitting every verb into `get.ts`, `patch.ts`, and so on.
+
+### File structure
 
 ```
 routes/
   users/
-    get.ts
-    post.ts
-    $id/
-      get.ts
-      patch.ts
+    route.ts          # parent: GET /users (list), POST /users (create, 201), …
+  users/$id/
+    route.ts          # child: GET|PATCH|DELETE /users/:id — always use params + methods here
 ```
+
+**Parent vs dynamic child:** Collection verbs (**including `post` create with success `201`**) live on the **parent** segment file (`users/route.ts`). A **dynamic** folder (`users/$id/`) only holds handlers that need that param; it **does not** replace the parent file—both segments are required so the tree matches the REST surface.
+
+### `defineRoute` shape
+
+**Collection segment** (verbs on the folder’s path only):
+
+```ts
+export default defineRoute({
+	get: createRoute({
+		/* list users */
+	}),
+	post: createRoute({
+		/* create user */
+	}),
+});
+```
+
+**Item segment** (path params shared by every method in the file):
+
+```ts
+export default defineRoute({
+	params: ParamsSchema,
+	methods: {
+		get: createRoute({
+			/* fetch one */
+		}),
+		patch: createRoute({
+			/* partial update */
+		}),
+		delete: createRoute({
+			/* remove */
+		}),
+	},
+});
+```
+
+The HTTP verb for each handler comes from the key (`get`, `post`, `methods.patch`, …). Individual `createRoute` values do not repeat a `method` field.
+
+**Dynamic segments (`…/$id/`):** Always use **`params` + `methods`** on that file so every method on the item shares the same path param typing. Do not use a lone `get: createRoute({ input: { params } })` at the root of `defineRoute` for `$id` routes—lift **`params`** to `defineRoute` and nest verbs under **`methods`** (see `http_contract_group1_wrapup.md` consolidated example).
 
 ### Rules
 
@@ -46,27 +86,32 @@ routes/
 ## Route Definition
 
 ```ts
-export default createRoute({
-	input: {
-		body: CreateUserSchema,
-		query: QuerySchema,
-		params: ParamsSchema,
-	},
-
-	responses: {
-		success: {
-			status: 200,
-			schema: UserSchema,
+export default defineRoute({
+	post: createRoute({
+		input: {
+			body: CreateUserSchema,
+			query: QuerySchema,
+			params: ParamsSchema,
 		},
-		emailConflict: {
-			status: 409,
-			schema: EmailConflictSchema,
-		},
-	},
 
-	run: async ({ input, ctx }) => {
-		return userService.create(input.body);
-	},
+		responses: {
+			success: {
+				status: 201,
+				schema: UserSchema,
+			},
+			emailConflict: {
+				status: 409,
+				schema: EmailConflictSchema,
+			},
+		},
+
+		run: async ({ input, ctx }) => {
+			return userService.createUser({
+				body: input.body,
+				actorId: ctx.state.user.id,
+			});
+		},
+	}),
 });
 ```
 
@@ -75,23 +120,30 @@ export default createRoute({
 ## Responses & Service Contract
 
 - Responses are defined in the route
-- Framework generates a **union type**
-- Service must return one of those types
+- Framework generates a **union type** over **`{ type, data }`** (see `http_contract_group1_wrapup.md`)
+- Services (or **`run`**) return that shape: **`data`** is the payload only; errors omit HTTP **`status`** in **`data`** (status comes from the `responses` entry)
 
 Example:
 
 ```ts
-type Response =
-  | { type: "success"; ... }
-  | { type: "emailConflict"; ... }
+type CreateUserResponse =
+	| { type: "success"; data: User }
+	| {
+			type: "emailConflict";
+			data: { title: string; code: string; email: string };
+	  };
 ```
 
-### Service Example
+### Service example
 
 ```ts
 return {
 	type: "emailConflict",
-	message: "Email already exists",
+	data: {
+		title: "Email already exists",
+		code: "EMAIL_CONFLICT",
+		email: "taken@example.com",
+	},
 };
 ```
 
@@ -180,10 +232,11 @@ ctx:
 
 ```ts
 run: async ({ input, ctx }) => {
-	return userService.create({
-		data: input.body,
-		userId: ctx.state.user?.id,
+	const user = await userService.createUser({
+		body: input.body,
+		actorId: ctx.state.user?.id,
 	});
+	return { type: "success", data: user };
 };
 ```
 
@@ -203,7 +256,7 @@ services → tools → models
 
 ## Differentiator
 
-- File-based routing for backend APIs
+- Resource-oriented route files with per-method contracts
 - Schema-driven contracts
 - No controllers
 - No heavy DI
@@ -216,7 +269,7 @@ services → tools → models
 ### To Define
 
 - Middleware file structure (`middleware.ts`)
-- Execution order (global → group → route)
+- Execution order (global → group → resource route file → method)
 - How middleware extends `ctx.state`
 - Type-safe state injection
 - Auth patterns

@@ -8,44 +8,45 @@ Use this checklist to mark what the framework already covers and identify what i
 - [x] Nested resources
 - [x] Collection routes vs item routes
 - [x] Route params
-- [ ] Query params
+- [x] Query params
 - [x] Wildcard route rules
-- [ ] Correct `GET` semantics
-- [ ] Correct `HEAD` semantics
-- [ ] Correct `POST` semantics
-- [ ] Correct `PUT` semantics
-- [ ] Correct `PATCH` semantics
-- [ ] Correct `DELETE` semantics
-- [ ] Correct `OPTIONS` semantics
-- [ ] Correct HTTP status code behavior
-- [ ] Request parser
-- [ ] Response builder
+- [x] Correct `GET` semantics
+- [x] Correct `HEAD` semantics
+- [x] Correct `POST` semantics
+- [x] Correct `PUT` semantics
+- [x] Correct `PATCH` semantics
+- [x] Correct `DELETE` semantics
+- [x] Correct `OPTIONS` semantics
+- [x] Correct HTTP status code behavior
+- [x] Request parser
+- [x] Response builder
 - [x] Middleware or interceptor pipeline
 - [x] Route handlers or controllers
-- [x] Per-route metadata
+- [x] Per-segment route file metadata (one `route.ts` per URL segment, not one file per HTTP verb)
+- [x] Parent collection segment alongside dynamic child segments (`users/route.ts` + `users/$id/route.ts`, collection `post` → `201` on parent)
 - [ ] Abort or cancellation handling
 - [ ] Graceful shutdown
-- [ ] JSON-first serialization
-- [ ] Pluggable body parsers
-- [ ] Content negotiation through `Accept`
-- [ ] Content negotiation through `Content-Type`
-- [ ] Reject unsupported request media types with `415 Unsupported Media Type`
-- [ ] Reject unsupported response media types with `406 Not Acceptable`
+- [x] JSON-first serialization
+- [x] Pluggable body parsers
+- [x] Content negotiation through `Accept`
+- [x] Content negotiation through `Content-Type`
+- [x] Reject unsupported request media types with `415 Unsupported Media Type`
+- [x] Reject unsupported response media types with `406 Not Acceptable`
 - [x] Validate path params
 - [x] Validate query params
-- [ ] Validate headers
-- [ ] Validate cookies
+- [x] Validate headers
+- [x] Validate cookies
 - [x] Validate request bodies
 - [x] Support syntactic validation
 - [ ] Support semantic validation
 - [x] Strong typing or schema-based validation
-- [ ] Request body size limits
+- [x] Request body size limits
 - [ ] Reject unknown or illegal fields when configured
 - [x] Standard error shape
-- [ ] Validation errors with field paths
-- [ ] Stable framework error codes
-- [ ] Hide stack traces and internal details in production
-- [ ] Support or align with RFC 9457 `application/problem+json`
+- [x] Validation errors with field paths
+- [x] Stable framework error codes
+- [x] Hide stack traces and internal details in production
+- [x] Support or align with RFC 9457 `application/problem+json`
 
 ## API Design Features
 
@@ -120,7 +121,7 @@ Use this checklist to mark what the framework already covers and identify what i
 - [ ] No sensitive data in URLs
 - [ ] Header normalization
 - [ ] HTTP method allowlists
-- [ ] Safe request parsers
+- [x] Safe request parsers
 - [ ] SSRF-safe outbound HTTP helpers if outbound helpers are included
 
 ## Operations
@@ -149,12 +150,13 @@ Use this checklist to mark what the framework already covers and identify what i
 ## Framework Architecture
 
 - [x] Simple route declaration
+- [x] Resource route files (`defineRoute` with per-method `createRoute` per URL segment)
 - [x] Typed handlers
 - [x] Schema integration
 - [x] Middleware composition
 - [ ] Dependency injection or service container
 - [ ] Testing helpers
-- [ ] Good defaults
+- [x] Good defaults
 - [x] Escape hatches for advanced use cases
 - [ ] Plugin or module system
 - [ ] Replaceable logger

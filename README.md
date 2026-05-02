@@ -2,7 +2,7 @@
 
 **A schema-first REST framework for teams that want backend APIs to feel as clear, typed, and navigable as modern frontend apps.**
 
-Trail brings the developer experience of file-based frameworks to backend services: routes live where you expect them, contracts are defined up front, middleware is part of the type system, and OpenAPI falls out of the same source of truth your code already uses.
+Trail brings the developer experience of file-based frameworks to backend services: **resource route files** map cleanly to paths, **each file can hold every HTTP method** for that path behind **`defineRoute`**, contracts are defined up front, middleware is part of the type system, and OpenAPI falls out of the same source of truth your code already uses.
 
 It is for teams that like the ergonomics of Next.js, Astro, and TanStack, but want that same clarity at the API boundary.
 
@@ -15,18 +15,17 @@ Backend APIs should not require a maze of controllers, decorators, registries, a
 Trail is built around making that answer obvious.
 
 ```txt
-routes/users/post.ts
-routes/users/$id/get.ts
-routes/users/$id/patch.ts
+routes/users/route.ts
+routes/users/$id/route.ts
 ```
 
-Each file is a route. Each route owns its contract. The framework handles the HTTP translation.
+Each **route file** covers **one URL segment** (collection or item). Methods on that path (`get`, `post`, `patch`, …) are **`createRoute`** entries inside a single **`defineRoute`** export, so shared params, middleware, and metadata stay together. The framework handles the HTTP translation.
 
 ## Why Trail
 
 ### File-based APIs
 
-Your backend shape should be visible from the filesystem. Trail uses route files and folders to make endpoints easy to discover, review, and maintain.
+Your backend shape should be visible from the filesystem. Trail uses **folders for URL segments** and **`route.ts` (or equivalent) files** for the contracts on that segment. Putting **all verbs for one path in one file** makes shared middleware, schemas, and OpenAPI metadata easier to keep consistent than scattering `get.ts`, `patch.ts`, and `delete.ts` across the tree.
 
 ### Contracts before handlers
 
@@ -51,37 +50,39 @@ Trail is opinionated where APIs need consistency: routing, validation, context, 
 ## What It Feels Like
 
 ```ts
-export default createRoute({
-	input: {
-		body: CreateUserSchema,
-	},
-
-	responses: {
-		success: {
-			status: 201,
-			schema: UserSchema,
+export default defineRoute({
+	post: createRoute({
+		input: {
+			body: CreateUserSchema,
 		},
-		emailConflict: {
-			status: 409,
-			schema: EmailConflictSchema,
-		},
-	},
 
-	run: async ({ input, ctx }) => {
-		return users.create({
-			data: input.body,
-			actorId: ctx.state.user.id,
-		});
-	},
+		responses: {
+			success: {
+				status: 201,
+				schema: UserSchema,
+			},
+			emailConflict: {
+				status: 409,
+				schema: EmailConflictSchema,
+			},
+		},
+
+		run: async ({ input, ctx }) => {
+			return users.createUser({
+				body: input.body,
+				actorId: ctx.state.user.id,
+			});
+		},
+	}),
 });
 ```
 
-The route says what it accepts. It says what it can return. It receives typed input and typed context. The service returns a declared outcome. Trail turns that outcome into the HTTP response.
+The **method** (`post` here) is the map key under **`defineRoute`**. That `createRoute` says what the handler accepts, what it can return, and receives typed input and typed context. **`users.createUser`** returns the framework-generated **`{ type, data }`** union for this route (same contract as `http_contract_group1_wrapup.md`). Trail turns that value into the HTTP response (including **`201`** for this `success` entry).
 
 ## The Mental Model
 
 ```txt
-files define routes
+resource route files define a path segment and its HTTP methods
 schemas define contracts
 middleware defines context
 services define behavior
@@ -123,3 +124,7 @@ Reserved fallback names:
 
 - **Routa**: close to routing, short, and framework-friendly.
 - **Weave**: good if the framework leans into composing routes, middleware, contracts, and services.
+
+possible domains:
+
+- trailjs.dev
