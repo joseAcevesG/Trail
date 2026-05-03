@@ -86,9 +86,9 @@ Use this checklist to mark what the framework already covers and identify what i
 ## Security
 
 - [x] Authentication abstraction
-- [ ] Bearer token support
-- [ ] API key support for suitable cases
-- [ ] Session or cookie support if browser APIs are a target
+- [x] Bearer token support
+- [x] API key support for suitable cases
+- [x] Session or cookie support if browser APIs are a target
 - [x] Per-route authorization hooks
 - [ ] Object-level authorization support
 - [x] Function-level authorization support
@@ -100,29 +100,29 @@ Use this checklist to mark what the framework already covers and identify what i
 - [ ] Mitigation for unrestricted resource consumption
 - [ ] Mitigation for broken function-level authorization
 - [ ] Mitigation for unrestricted access to sensitive business flows
-- [ ] SSRF protection
+- [x] SSRF protection
 - [ ] Security misconfiguration safeguards
-- [ ] Safe consumption of third-party APIs
-- [ ] Per-IP rate limits
-- [ ] Per-token rate limits
-- [ ] Per-route rate limits
-- [ ] Request timeout limits
-- [ ] Concurrency limits
-- [ ] Clear `429 Too Many Requests` behavior
-- [ ] Explicit CORS configuration
-- [ ] No wildcard CORS credentials
-- [ ] Allowed CORS origins
-- [ ] Allowed CORS methods
-- [ ] Allowed CORS headers
-- [ ] CORS preflight handling
-- [ ] Security headers for browser-consumed APIs
-- [ ] HTTPS assumption
+- [x] Safe consumption of third-party APIs
+- [x] Per-IP rate limits
+- [x] Per-token rate limits
+- [x] Per-route rate limits
+- [x] Request timeout limits
+- [x] Concurrency limits
+- [x] Clear `429 Too Many Requests` behavior
+- [x] Explicit CORS configuration
+- [x] No wildcard CORS credentials
+- [x] Allowed CORS origins
+- [x] Allowed CORS methods
+- [x] Allowed CORS headers
+- [x] CORS preflight handling
+- [x] Security headers for browser-consumed APIs
+- [x] HTTPS assumption
 - [ ] No stack traces in production responses
-- [ ] No sensitive data in URLs
+- [x] No sensitive data in URLs
 - [ ] Header normalization
 - [ ] HTTP method allowlists
 - [x] Safe request parsers
-- [ ] SSRF-safe outbound HTTP helpers if outbound helpers are included
+- [x] SSRF-safe outbound HTTP helpers if outbound helpers are included
 
 ## Operations
 
@@ -162,7 +162,7 @@ Use this checklist to mark what the framework already covers and identify what i
 - [ ] Replaceable logger
 - [ ] Replaceable validator
 - [ ] Replaceable serializer
-- [ ] Replaceable auth provider
+- [x] Replaceable auth provider
 - [ ] Startup lifecycle hooks
 - [ ] Shutdown lifecycle hooks
 - [ ] Request start lifecycle hooks
@@ -195,9 +195,9 @@ Use this checklist to mark what the framework already covers and identify what i
 - [x] Validation
 - [x] Standardized errors
 - [x] OpenAPI
-- [ ] Authentication hooks
+- [x] Authentication hooks
 - [x] Authorization hooks
-- [ ] Rate limits
+- [x] Rate limits
 - [ ] Structured logging
 - [ ] Health endpoint
 - [ ] Readiness endpoint
