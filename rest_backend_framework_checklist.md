@@ -51,16 +51,17 @@ Use this checklist to mark what the framework already covers and identify what i
 ## API Design Features
 
 - [x] Generate OpenAPI from routes and schemas
-- [ ] Support spec-first OpenAPI workflows
+- [x] Support spec-first OpenAPI workflows
 - [x] Document request bodies in OpenAPI
 - [x] Document response bodies in OpenAPI
 - [x] Document status codes in OpenAPI
-- [ ] Document auth schemes in OpenAPI
-- [ ] Document examples in OpenAPI
-- [ ] Document tags in OpenAPI
-- [ ] Use OpenAPI for generated docs
-- [ ] Use OpenAPI for testing or contract checks
-- [ ] Use OpenAPI for SDK generation
+- [x] Document auth schemes in OpenAPI
+- [x] Document examples in OpenAPI
+- [x] Document tags in OpenAPI
+- [x] Use OpenAPI for generated docs
+- [x] Use OpenAPI for testing or contract checks
+- [x] Use OpenAPI for SDK generation
+  Decision note: emit SDK-ready OpenAPI for external generators; no built-in SDK generator in v1.
 - [ ] Built-in pagination primitives
 - [ ] Cursor pagination
 - [ ] Offset pagination
@@ -72,11 +73,12 @@ Use this checklist to mark what the framework already covers and identify what i
 - [ ] Allowlisted filter fields
 - [ ] Sparse fieldsets or response projections
 - [ ] Protection against unrestricted arbitrary query execution
-- [ ] Backward-compatible API changes by default
-- [ ] Deprecation metadata
-- [ ] Deprecation headers
-- [ ] Strategy for breaking changes
-- [ ] Versioning strategy
+- [x] Backward-compatible API changes by default
+  Decision note: Trail defaults to additive evolution posture through `trail openapi breaking` baseline comparison, not runtime enforcement.
+- [x] Deprecation metadata
+- [x] Deprecation headers
+- [x] Strategy for breaking changes
+- [x] Versioning strategy
 - [ ] Cache-Control support
 - [ ] ETag support
 - [ ] Last-Modified support
