@@ -46,8 +46,14 @@ provides:
 guarantees:
   State that will exist if middleware continues
 
+input:
+  Contract inputs the middleware depends on
+
 rejects:
   Possible early responses
+
+openapi:
+  Extra docs-only metadata not already expressed elsewhere
 ```
 
 ---
@@ -56,6 +62,12 @@ rejects:
 
 ```ts
 export default defineMiddleware({
+	input: {
+		headers: {
+			"x-workspace-id": z.string(),
+		},
+	},
+
 	requires: {
 		auth: AuthenticatedAuthSchema,
 	},
@@ -72,6 +84,13 @@ export default defineMiddleware({
 		cannotLoadPermissions: {
 			status: 500,
 			schema: CannotLoadPermissionsSchema,
+		},
+	},
+
+	openapi: {
+		description: "Loads permission context for the authenticated actor.",
+		extensions: {
+			"x-trail-context": ["permissions"],
 		},
 	},
 
@@ -190,6 +209,11 @@ OpenAPI generation rules:
 - If same-status variants have different payload shapes, Trail should document that status with `oneOf`.
 - If same-status variants expose different media types, Trail should merge them under the same status entry and media-type map.
 - Runtime typing remains variant-based by `type`, even when documentation merges them under one status code.
+- Middleware `input` contributes request contract documentation the same way route input does.
+- Middleware `openapi` is docs-only metadata for information not already declared through `input`, `rejects`, or guard configuration.
+- Middleware `openapi` should stay minimal and is limited to:
+  - `description`
+  - `extensions`
 
 ---
 
